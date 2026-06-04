@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TRANSMISSIONS</title>
+<style>
+  :root {
+    --bg: #F0EAD8;
+    --fg: #1A1A1A;
+    --muted: #6B6358;
+    --line: #C9C0AC;
+    --accent: #2E2A20;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .terminal {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 32px 20px 80px;
+  }
+  .prompt {
+    color: var(--muted);
+    margin-bottom: 1.5rem;
+    white-space: pre;
+  }
+  .prompt b { color: var(--fg); font-weight: normal; }
+  .header {
+    border-bottom: 1px dashed var(--line);
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--muted);
+    white-space: pre;
+  }
+  .footer {
+    border-top: 1px dashed var(--line);
+    padding-top: 0.5rem;
+    margin-top: 0.5rem;
+    color: var(--muted);
+  }
+  .row {
+    display: block;
+    padding: 4px 0;
+    color: var(--fg);
+    text-decoration: none;
+    cursor: pointer;
+    white-space: pre;
+    user-select: none;
+  }
+  .row:hover { background: rgba(0, 0, 0, 0.04); }
+  .row.open { background: rgba(0, 0, 0, 0.06); }
+  .row .arrow {
+    display: inline-block;
+    width: 1.2em;
+    color: var(--muted);
+  }
+  .content {
+    display: none;
+    padding: 12px 20px 16px 2.4em;
+    background: rgba(0, 0, 0, 0.03);
+    white-space: pre-wrap;
+    word-break: break-word;
+    border-left: 2px solid var(--line);
+    margin-left: 0.4em;
+  }
+  .content.open { display: block; }
+  .empty {
+    color: var(--muted);
+    font-style: italic;
+    padding: 1rem 0;
+  }
+  .meta { color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="terminal">
+
+<pre class="prompt">C:\&gt; <b>DIR /TRANSMISSIONS</b></pre>
+
+<pre class="header"> Volume in drive C is CORPSE MOUTH
+ Directory of C:\TRANSMISSIONS\
+</pre>
+
+<div id="list"></div>
+
+<pre class="footer" id="footer">              0 File(s)</pre>
+
+</div>
+
+<script>
+async function load() {
+  const list = document.getElementById('list');
+  const footer = document.getElementById('footer');
+  let data;
+  try {
+    const r = await fetch('data/transmissions.json?cb=' + Date.now());
+    data = await r.json();
+  } catch (e) {
+    list.innerHTML = '<div class="empty">[ FEED NICHT VERFÜGBAR ]</div>';
+    return;
+  }
+  if (!data.length) {
+    list.innerHTML = '<div class="empty">[ KEINE ÜBERTRAGUNGEN ]</div>';
+    return;
+  }
+  // Neueste oben
+  data.sort((a, b) => b.number.localeCompare(a.number));
+
+  list.innerHTML = data.map(tx => {
+    const dt = new Date(tx.timestamp);
+    const date = dt.toISOString().slice(0,10);
+    const time = dt.toISOString().slice(11,16);
+    return `
+      <a class="row" id="tx-${tx.number}" href="#tx-${tx.number}" onclick="toggle('${tx.number}', event)">
+<span class="arrow">▸</span>${date}  ${time}   <span class="meta">[TX]</span>  ${tx.number}.TXT</a>
+      <div class="content" id="c-${tx.number}">${escapeHtml(tx.text)}</div>
+    `;
+  }).join('');
+
+  const count = data.length;
+  footer.textContent = '              ' + count + ' File(s)';
+
+  // Auto-open wenn Hash in URL
+  const hash = location.hash.replace('#', '');
+  if (hash) {
+    const row = document.getElementById(hash);
+    if (row) {
+      const num = hash.replace('tx-', '');
+      toggle(num, null);
+      row.scrollIntoView({behavior:'smooth', block:'start'});
+    }
+  }
+}
+
+function toggle(num, e) {
+  if (e) e.preventDefault();
+  const row = document.getElementById('tx-' + num);
+  const content = document.getElementById('c-' + num);
+  const arrow = row.querySelector('.arrow');
+  const isOpen = content.classList.contains('open');
+  content.classList.toggle('open');
+  row.classList.toggle('open');
+  arrow.textContent = isOpen ? '▸' : '▾';
+  if (!isOpen) history.replaceState(null, '', '#tx-' + num);
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+load();
+</script>
+</body>
+</html>

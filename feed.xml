@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+  <title>CORPSE MOUTH TRANSMISSIONS</title>
+  <link>https://birdbrain1991.github.io/transmissions/</link>
+  <atom:link href="https://birdbrain1991.github.io/transmissions/feed.xml" rel="self" type="application/rss+xml" />
+  <description>Status updates from CORPSE MOUTH</description>
+  <language>de</language>
+</channel>
+</rss>
